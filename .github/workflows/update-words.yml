@@ -1,0 +1,142 @@
+name: Update Wordle Words Daily
+
+on:
+  schedule:
+    # Run at 6:00 AM UTC (1:00 AM EST) - after the new Wordle is released at midnight ET
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-words:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch today's Wordle answer and update list
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+
+          // Path to index.html (in Wordle subfolder)
+          const HTML_PATH = 'Wordle/index.html';
+
+          // Function to fetch URL content
+          function fetchURL(url) {
+            return new Promise((resolve, reject) => {
+              https.get(url, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(data));
+              }).on('error', reject);
+            });
+          }
+
+          async function main() {
+            try {
+              // Read current index.html
+              let html = fs.readFileSync(HTML_PATH, 'utf8');
+
+              // Extract current words from the file
+              const wordsMatch = html.match(/const usedWords = new Set\(\[([\s\S]*?)\]\)/);
+              if (!wordsMatch) {
+                console.log('Could not find usedWords in index.html');
+                process.exit(1);
+              }
+
+              // Parse existing words
+              const existingWordsStr = wordsMatch[1];
+              const existingWords = new Set(
+                existingWordsStr.match(/"([A-Z]+)"/g)?.map(w => w.replace(/"/g, '')) || []
+              );
+
+              console.log(`Current word count: ${existingWords.size}`);
+
+              // Fetch the latest word from a reliable source
+              const pageContent = await fetchURL('https://www.rockpapershotgun.com/wordle-past-answers');
+
+              // Look for today's answer pattern
+              const recentWordsMatch = pageContent.match(/Wordle \d+[:\s]+<strong>([A-Z]+)<\/strong>/gi);
+
+              if (recentWordsMatch && recentWordsMatch.length > 0) {
+                // Extract just the words
+                const newWords = recentWordsMatch
+                  .map(m => m.match(/<strong>([A-Z]+)<\/strong>/i)?.[1]?.toUpperCase())
+                  .filter(Boolean);
+
+                let addedCount = 0;
+                for (const word of newWords) {
+                  if (word && word.length === 5 && !existingWords.has(word)) {
+                    existingWords.add(word);
+                    console.log(`Added new word: ${word}`);
+                    addedCount++;
+                  }
+                }
+
+                if (addedCount === 0) {
+                  console.log('No new words to add - list is up to date!');
+                  process.exit(0);
+                }
+              } else {
+                console.log('Could not find recent words on the page');
+                process.exit(0);
+              }
+
+              // Sort words alphabetically
+              const sortedWords = Array.from(existingWords).sort();
+
+              // Format words into rows of 10
+              const rows = [];
+              for (let i = 0; i < sortedWords.length; i += 10) {
+                const row = sortedWords.slice(i, i + 10).map(w => `"${w}"`).join(', ');
+                rows.push('            ' + row);
+              }
+              const newWordsStr = rows.join(',\n');
+
+              // Replace in HTML
+              html = html.replace(
+                /const usedWords = new Set\(\[([\s\S]*?)\]\)/,
+                `const usedWords = new Set([\n${newWordsStr}\n        ])`
+              );
+
+              // Update the "Last updated" date
+              const today = new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              html = html.replace(
+                /lastUpdatedSpan\.textContent = "[^"]+"/,
+                `lastUpdatedSpan.textContent = "${today}"`
+              );
+
+              // Write back
+              fs.writeFileSync(HTML_PATH, html);
+              console.log(`Updated! New word count: ${sortedWords.length}`);
+              console.log(`Last updated: ${today}`);
+
+            } catch (error) {
+              console.error('Error:', error.message);
+              process.exit(1);
+            }
+          }
+
+          main();
+          EOF
+
+      - name: Commit and push if changed
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Wordle/index.html
+          git diff --staged --quiet || git commit -m "Update Wordle words list - $(date +'%Y-%m-%d')"
+          git push

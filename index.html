@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>5 Letter Social Club</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-gradient-start: #667eea;
+            --bg-gradient-end: #764ba2;
+            --container-bg: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-muted: #888;
+            --text-placeholder: #aaa;
+            --border-color: #e0e0e0;
+            --border-divider: #eee;
+            --input-bg: white;
+            --word-tag-bg: #f8f8f8;
+            --word-tag-hover: #fff3cd;
+            --footer-text: rgba(255, 255, 255, 0.7);
+            --footer-link: rgba(255, 255, 255, 0.9);
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-end: #16213e;
+            --container-bg: #1e1e2e;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-muted: #888;
+            --text-placeholder: #666;
+            --border-color: #3a3a4a;
+            --border-divider: #2a2a3a;
+            --input-bg: #2a2a3a;
+            --word-tag-bg: #2a2a3a;
+            --word-tag-hover: #3a3a2a;
+            --footer-text: rgba(255, 255, 255, 0.6);
+            --footer-link: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--word-tag-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            border-color: var(--bg-gradient-start);
+        }
+
+        h1 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        h1 .club-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        [data-theme="dark"] h1 .club-number {
+            background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 18px 24px;
+            font-size: 1.5rem;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            text-align: center;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        input[type="text"]:focus::placeholder {
+            color: transparent;
+        }
+
+        input[type="text"]::placeholder {
+            letter-spacing: 2px;
+            text-transform: none;
+            color: var(--text-placeholder);
+        }
+
+        .result {
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result.used {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 2px solid #fca5a5;
+            display: block;
+        }
+
+        .result.safe {
+            background: #d1fae5;
+            color: #059669;
+            border: 2px solid #6ee7b7;
+            display: block;
+        }
+
+        .result.invalid {
+            background: #fef3c7;
+            color: #d97706;
+            border: 2px solid #fcd34d;
+            display: block;
+        }
+
+        .result.not-a-word {
+            background: #f3e8ff;
+            color: #7c3aed;
+            border: 2px solid #c4b5fd;
+            display: block;
+        }
+
+        .result.checking {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 2px solid #7dd3fc;
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #7dd3fc;
+            border-top-color: #0369a1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .word-display {
+            font-size: 1.8rem;
+            letter-spacing: 6px;
+            margin: 10px 0;
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-divider);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .update-info {
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: var(--text-placeholder);
+        }
+
+        footer {
+            margin-top: 20px;
+            color: var(--footer-text);
+            font-size: 0.8rem;
+        }
+
+        footer a {
+            color: var(--footer-link);
+        }
+
+        .word-list-container {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .word-list-header {
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            line-height: 1.8;
+        }
+
+        .word-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            background: var(--word-tag-bg);
+            border-left: 3px solid var(--border-color);
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .word-tag:hover {
+            background: var(--word-tag-hover);
+            border-left-color: #ffc107;
+            cursor: default;
+        }
+
+        .word-tag.highlighted {
+            background: var(--word-tag-hover);
+            border-left-color: #ff9800;
+            font-weight: 600;
+        }
+
+        .word-list-search {
+            margin-bottom: 20px;
+        }
+
+        .word-list-search input {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            width: 200px;
+            outline: none;
+            transition: border-color 0.3s;
+            background: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        .word-list-search input:focus {
+            border-color: #667eea;
+        }
+
+        .word-list-search input::placeholder {
+            color: var(--text-placeholder);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <span id="themeIcon">&#9790;</span>
+        </button>
+        <h1><span class="club-number">5</span> Letter Social Club</h1>
+        <p class="subtitle">Check if a word has already been used</p>
+
+        <div class="search-box">
+            <input
+                type="text"
+                id="wordInput"
+                placeholder="Type a word..."
+                maxlength="5"
+                autocomplete="off"
+                autofocus
+            >
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <div class="stats">
+            <span id="wordCount">0</span> words have been used so far
+        </div>
+
+        <div class="update-info">
+            Last updated: <span id="lastUpdated">Loading...</span>
+        </div>
+    </div>
+
+    <div class="word-list-container">
+        <div class="word-list-header">All Used Words</div>
+        <div class="word-list-search">
+            <input type="text" id="filterInput" placeholder="Filter words..." autocomplete="off">
+        </div>
+        <div id="wordList" class="word-list"></div>
+    </div>
+
+    <footer>
+        No ads. No tracking. Just answers.
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+
+        function setTheme(isDark) {
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            themeIcon.innerHTML = isDark ? '&#9728;' : '&#9790;';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            // Update meta theme-color for mobile browsers
+            document.querySelector('meta[name="theme-color"]').setAttribute(
+                'content', isDark ? '#1a1a2e' : '#667eea'
+            );
+        }
+
+        // Check for saved theme preference or system preference
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            setTheme(!isDark);
+        });
+
+        // Complete list of used words (alphabetically sorted)
+        // Total: 1677 words
+        const usedWords = new Set([
+            "ABACK", "ABASE", "ABATE", "ABBEY", "ABBOT", "ABHOR", "ABIDE", "ABOUT", "ABOVE", "ABYSS",
+            "ACORN", "ACRID", "ACTOR", "ACUTE", "ADAGE", "ADAPT", "ADEPT", "ADMIN", "ADMIT", "ADOBE",
+            "ADOPT", "ADORE", "ADULT", "AFFIX", "AFTER", "AGAIN", "AGAPE", "AGATE", "AGENT", "AGILE",
+            "AGING", "AGLOW", "AGONY", "AGREE", "AHEAD", "AISLE", "ALARM", "ALBUM", "ALERT", "ALIEN",
+            "ALIKE", "ALIVE", "ALLOW", "ALOFT", "ALONE", "ALONG", "ALOOF", "ALOUD", "ALPHA", "ALTAR",
+            "ALTER", "AMASS", "AMBER", "AMBLE", "AMISS", "AMONG", "AMPLE", "AMUSE", "ANGEL", "ANGER",
+            "ANGLE", "ANGRY", "ANGST", "ANNEX", "ANNOY", "ANODE", "ANTIC", "ANVIL", "AORTA", "APART",
+            "APHID", "APPLE", "APPLY", "APRON", "APTLY", "ARBOR", "ARDOR", "ARGUE", "ARISE", "AROMA",
+            "ARROW", "ARTSY", "ASCOT", "ASHEN", "ASIDE", "ASKEW", "ASSAY", "ASSET", "ATLAS", "ATOLL",
+            "ATONE", "ATRIA", "AUDIO", "AUDIT", "AVAIL", "AVERT", "AVOID", "AWAIT", "AWAKE", "AWARD",
+            "AWARE", "AWASH", "AWFUL", "AWOKE", "AXIOM", "AZURE", "BACON", "BADGE", "BADLY", "BAGEL",
+            "BAKER", "BALER", "BALMY", "BALSA", "BANAL", "BANJO", "BARGE", "BASIC", "BASIN", "BASTE",
+            "BATCH", "BATHE", "BATON", "BATTY", "BAWDY", "BAYOU", "BEACH", "BEADY", "BEARD", "BEAST",
+            "BEAUT", "BEEFY", "BEGET", "BEGIN", "BEING", "BELCH", "BELIE", "BELLY", "BELOW", "BENCH",
+            "BERET", "BERTH", "BESET", "BEVEL", "BICEP", "BILGE", "BINGE", "BIOME", "BIRCH", "BIRTH",
+            "BLACK", "BLADE", "BLAME", "BLAND", "BLANK", "BLARE", "BLAST", "BLAZE", "BLEAK", "BLEED",
+            "BLEEP", "BLEND", "BLIMP", "BLINK", "BLISS", "BLOCK", "BLOKE", "BLOND", "BLOWN", "BLUFF",
+            "BLUNT", "BLURB", "BLURT", "BLUSH", "BOARD", "BOAST", "BONGO", "BONUS", "BOOBY", "BOOST",
+            "BOOTY", "BOOZE", "BOOZY", "BORAX", "BORNE", "BOSSY", "BOUGH", "BOXER", "BRACE", "BRAID",
+            "BRAIN", "BRAKE", "BRAND", "BRASH", "BRASS", "BRAVE", "BRAVO", "BRAWN", "BREAD", "BREAK",
+            "BREED", "BRIAR", "BRIBE", "BRIDE", "BRIEF", "BRINE", "BRING", "BRINK", "BRINY", "BRISK",
+            "BROAD", "BROKE", "BROOK", "BROOM", "BROTH", "BROWN", "BRUSH", "BRUTE", "BUDDY", "BUGGY",
+            "BUGLE", "BUILD", "BUILT", "BULGE", "BULKY", "BULLY", "BUNCH", "BUNNY", "BURLY", "BURNT",
+            "CABLE", "CACAO", "CACHE", "CACTI", "CADET", "CAMEL", "CAMEO", "CANDY", "CANNY", "CANOE",
+            "CANON", "CAPER", "CARAT", "CARGO", "CAROL", "CARRY", "CARVE", "CATCH", "CATER", "CATTY",
+            "CAULK", "CAUSE", "CEASE", "CEDAR", "CHAFE", "CHAIN", "CHAIR", "CHALK", "CHAMP", "CHANT",
+            "CHAOS", "CHARD", "CHARM", "CHART", "CHASE", "CHASM", "CHEAP", "CHEAT", "CHECK", "CHEEK",
+            "CHEER", "CHEST", "CHIEF", "CHILD", "CHILL", "CHIME", "CHIRP", "CHOCK", "CHOIR", "CHOKE",
+            "CHORD", "CHORE", "CHOSE", "CHUNK", "CHUTE", "CIDER", "CIGAR", "CINCH", "CIRCA", "CIVIC",
+            "CIVIL", "CLAMP", "CLASH", "CLASS", "CLEAN", "CLEAR", "CLEFT", "CLERK", "CLICK", "CLIMB",
+            "CLING", "CLOAK", "CLOCK", "CLONE", "CLOSE", "CLOTH", "CLOUD", "CLOVE", "CLOWN", "CLUCK",
+            "CLUNG", "COACH", "COAST", "COCOA", "COLIC", "COLON", "COMET", "COMFY", "COMMA", "CONCH",
+            "CONDO", "CONIC", "CORAL", "CORER", "CORNY", "COULD", "COUNT", "COURT", "COVEN", "COVER",
+            "COVET", "COWER", "COYLY", "CRAFT", "CRAMP", "CRANE", "CRANK", "CRASS", "CRATE", "CRAVE",
+            "CRAWL", "CRAZE", "CRAZY", "CREAK", "CREAM", "CREDO", "CREPE", "CREPT", "CREST", "CRIME",
+            "CRIMP", "CRISP", "CROAK", "CRONE", "CROOK", "CROSS", "CROWD", "CROWN", "CRUMB", "CRUSH",
+            "CRUST", "CRYPT", "CUMIN", "CURIO", "CURLY", "CURSE", "CURVE", "CYBER", "CYNIC", "DADDY",
+            "DAISY", "DALLY", "DANCE", "DANDY", "DATUM", "DAUNT", "DEATH", "DEBIT", "DEBUG", "DEBUT",
+            "DECAL", "DECAY", "DECOR", "DECOY", "DECRY", "DEFER", "DEITY", "DELAY", "DELTA", "DELVE",
+            "DENIM", "DEPOT", "DEPTH", "DETER", "DETOX", "DEUCE", "DEVIL", "DIARY", "DICEY", "DIGIT",
+            "DINER", "DINGO", "DINGY", "DIRGE", "DISCO", "DITTO", "DITTY", "DODGE", "DODGY", "DOGMA",
+            "DOING", "DOLLY", "DONOR", "DONUT", "DOPEY", "DOUBT", "DOUGH", "DOWEL", "DOWRY", "DOZEN",
+            "DRAFT", "DRAIN", "DRAPE", "DRAWN", "DREAD", "DREAM", "DRIFT", "DRILL", "DRINK", "DRIVE",
+            "DROLL", "DRONE", "DROOL", "DROOP", "DROVE", "DRYER", "DUCHY", "DUMMY", "DUTCH", "DUVET",
+            "DWARF", "DWELL", "DWELT", "EAGER", "EAGLE", "EARLY", "EARTH", "EASEL", "EBONY", "EDICT",
+            "EDIFY", "EGRET", "EIGHT", "EJECT", "ELATE", "ELBOW", "ELDER", "ELITE", "ELOPE", "ELUDE",
+            "EMAIL", "EMBER", "EMPTY", "ENACT", "ENDOW", "ENEMA", "ENJOY", "ENNUI", "ENSUE", "ENTER",
+            "EPOCH", "EPOXY", "EQUAL", "EQUIP", "ERASE", "ERODE", "ERROR", "ERUPT", "ESSAY", "ETHER",
+            "ETHIC", "ETHOS", "EVADE", "EVENT", "EVERY", "EVOKE", "EXACT", "EXALT", "EXCEL", "EXERT",
+            "EXILE", "EXIST", "EXPEL", "EXTOL", "EXTRA", "EXULT", "FABLE", "FACET", "FAINT", "FAITH",
+            "FALSE", "FANCY", "FARCE", "FAULT", "FAVOR", "FEAST", "FEIGN", "FERAL", "FERRY", "FETCH",
+            "FETID", "FEVER", "FEWER", "FIBER", "FIELD", "FIEND", "FIERY", "FIFTH", "FIFTY", "FILET",
+            "FILLY", "FINAL", "FINCH", "FINER", "FIRST", "FISHY", "FIXER", "FJORD", "FLAIL", "FLAIR",
+            "FLAKE", "FLAME", "FLANK", "FLARE", "FLASH", "FLASK", "FLESH", "FLICK", "FLING", "FLINT",
+            "FLIRT", "FLOAT", "FLOCK", "FLOOD", "FLOOR", "FLORA", "FLOSS", "FLOUR", "FLOUT", "FLOWN",
+            "FLUFF", "FLUME", "FLUNG", "FLUNK", "FLUTE", "FLYER", "FOAMY", "FOCAL", "FOCUS", "FOGGY",
+            "FOIST", "FOLIO", "FOLLY", "FORAY", "FORCE", "FORGE", "FORGO", "FORTE", "FORTH", "FORTY",
+            "FORUM", "FOUND", "FOYER", "FRAIL", "FRAME", "FRANK", "FRESH", "FRIED", "FRILL", "FRITZ",
+            "FROCK", "FROND", "FRONT", "FROST", "FROTH", "FROWN", "FROZE", "FRUIT", "FUGUE", "FULLY",
+            "FUNGI", "FUNKY", "FUNNY", "FUZZY", "GAMER", "GAMMA", "GAMUT", "GAUDY", "GAUGE", "GAUNT",
+            "GAUZE", "GAWKY", "GECKO", "GEESE", "GENIE", "GENRE", "GHOST", "GHOUL", "GIANT", "GIDDY",
+            "GIRTH", "GIVEN", "GIZMO", "GLADE", "GLAND", "GLARE", "GLASS", "GLAZE", "GLEAM", "GLEAN",
+            "GLIDE", "GLINT", "GLOAT", "GLOBE", "GLOOM", "GLORY", "GLOVE", "GLYPH", "GNASH", "GNOME",
+            "GOFER", "GOING", "GOLEM", "GONER", "GOODY", "GOOEY", "GOOFY", "GOOSE", "GORGE", "GOUGE",
+            "GRACE", "GRADE", "GRAFT", "GRAIL", "GRAIN", "GRAND", "GRANT", "GRAPH", "GRASP", "GRASS",
+            "GRATE", "GRAVE", "GRAVY", "GREAT", "GREED", "GREEN", "GREET", "GRIEF", "GRIFT", "GRIME",
+            "GRIMY", "GRIND", "GRIPE", "GROAN", "GROIN", "GROOM", "GROSS", "GROUP", "GROUT", "GROVE",
+            "GROWL", "GROWN", "GRUEL", "GRUFF", "GUANO", "GUARD", "GUESS", "GUEST", "GUIDE", "GUILD",
+            "GUILE", "GUISE", "GULLY", "GUMBO", "GUMMY", "GUPPY", "GUSTY", "HABIT", "HAIRY", "HALVE",
+            "HANDY", "HAPPY", "HARDY", "HARSH", "HASTE", "HATCH", "HATER", "HAUNT", "HAVEN", "HAVOC",
+            "HAZEL", "HEADY", "HEARD", "HEART", "HEATH", "HEAVE", "HEAVY", "HEFTY", "HEIST", "HELIX",
+            "HELLO", "HENCE", "HERON", "HILLY", "HINGE", "HIPPO", "HITCH", "HOARD", "HOBBY", "HOLLY",
+            "HOMER", "HONEY", "HORDE", "HORSE", "HOTEL", "HOUND", "HOUSE", "HOVEL", "HOVER", "HOWDY",
+            "HUMAN", "HUMID", "HUMOR", "HUMPH", "HUNCH", "HUNKY", "HURRY", "HUTCH", "HYENA", "HYPER",
+            "ICING", "IDEAL", "IDIOM", "IDLER", "IGLOO", "IMAGE", "IMBUE", "IMPEL", "INANE", "INBOX",
+            "INCUR", "INDEX", "INDIE", "INEPT", "INERT", "INFER", "INLAY", "INNER", "INPUT", "INTER",
+            "INTRO", "IONIC", "IRATE", "IRONY", "ISLET", "ISSUE", "ITCHY", "IVORY", "JAUNT", "JAZZY",
+            "JELLY", "JERKY", "JEWEL", "JIFFY", "JOINT", "JOKER", "JOLLY", "JOUST", "JUDGE", "JUICE",
+            "JUMPY", "KARMA", "KAYAK", "KAZOO", "KEBAB", "KEFIR", "KHAKI", "KIOSK", "KNACK", "KNAVE",
+            "KNEAD", "KNEEL", "KNELL", "KNELT", "KNIFE", "KNOCK", "KNOLL", "KNOWN", "KOALA", "KRILL",
+            "LABEL", "LABOR", "LADLE", "LAGER", "LANKY", "LAPEL", "LAPSE", "LARGE", "LARVA", "LASER",
+            "LASSO", "LATER", "LATHE", "LATTE", "LAUGH", "LAYER", "LEACH", "LEAFY", "LEAKY", "LEAPT",
+            "LEARN", "LEASE", "LEASH", "LEAST", "LEAVE", "LEDGE", "LEECH", "LEERY", "LEFTY", "LEGGY",
+            "LEMON", "LEMUR", "LEVEL", "LEVER", "LIBEL", "LIGHT", "LILAC", "LIMBO", "LIMIT", "LINEN",
+            "LINER", "LINGO", "LITHE", "LIVER", "LIVID", "LLAMA", "LOCAL", "LOCUS", "LODGE", "LOFTY",
+            "LOGIC", "LOOPY", "LORIS", "LOSER", "LOUSE", "LOUSY", "LOVER", "LOWER", "LOWLY", "LOYAL",
+            "LUCID", "LUCKY", "LUMPY", "LUNAR", "LUNCH", "LUNGE", "LURID", "LUSTY", "LYING", "MACAW",
+            "MACHO", "MADAM", "MADLY", "MAGIC", "MAGMA", "MAIZE", "MAJOR", "MAKER", "MAMBO", "MANGA",
+            "MANGO", "MANIA", "MANIC", "MANLY", "MANOR", "MAPLE", "MARCH", "MARRY", "MARSH", "MASON",
+            "MASSE", "MATCH", "MATEY", "MATTE", "MAUVE", "MAXIM", "MAYBE", "MAYOR", "MEALY", "MEANT",
+            "MEDAL", "MEDIA", "MEDIC", "MELON", "MERCY", "MERGE", "MERIT", "MERRY", "METAL", "METER",
+            "METRO", "MICRO", "MIDGE", "MIDST", "MIGHT", "MIMIC", "MINCE", "MINER", "MINTY", "MINUS",
+            "MIRTH", "MISER", "MODAL", "MODEL", "MODEM", "MOIST", "MOLAR", "MOLDY", "MOMMY", "MONEY",
+            "MONTH", "MOOSE", "MORAL", "MOSSY", "MOTEL", "MOTOR", "MOTTO", "MOULT", "MOUNT", "MOURN",
+            "MOUSE", "MOUTH", "MOVIE", "MUCKY", "MUGGY", "MULCH", "MUMMY", "MUNCH", "MURAL", "MUSHY",
+            "MUSIC", "MUSTY", "MYRRH", "NADIR", "NAIVE", "NANNY", "NASAL", "NASTY", "NATAL", "NAVAL",
+            "NAVEL", "NEEDY", "NEIGH", "NERDY", "NERVE", "NERVY", "NEVER", "NICER", "NICHE", "NIGHT",
+            "NINJA", "NINTH", "NOBLE", "NOISE", "NOISY", "NOMAD", "NORTH", "NOVEL", "NUDGE", "NURSE",
+            "NYLON", "NYMPH", "OCCUR", "OCEAN", "OCTET", "ODDLY", "OFFAL", "OFFER", "OFTEN", "OLDER",
+            "OLIVE", "OMEGA", "ONION", "ONSET", "OOMPH", "OPERA", "OPINE", "ORDER", "ORGAN", "OTHER",
+            "OTTER", "OUGHT", "OUNCE", "OUTDO", "OUTER", "OVERT", "OWNER", "OXIDE", "OZONE", "PAINT",
+            "PANEL", "PANIC", "PAPAL", "PAPER", "PARER", "PARRY", "PARTY", "PASTA", "PATCH", "PATIO",
+            "PATSY", "PATTY", "PAUSE", "PEACE", "PEACH", "PEARL", "PECAN", "PEDAL", "PENNE", "PERCH",
+            "PERIL", "PERKY", "PESKY", "PETAL", "PETTY", "PHASE", "PHONE", "PHONY", "PHOTO", "PIANO",
+            "PICKY", "PIECE", "PIETY", "PILOT", "PINCH", "PINEY", "PINKY", "PINTO", "PIOUS", "PIPER",
+            "PIQUE", "PITCH", "PITHY", "PIXEL", "PIXIE", "PLACE", "PLAID", "PLAIN", "PLAIT", "PLANE",
+            "PLANK", "PLANT", "PLATE", "PLAZA", "PLEAD", "PLEAT", "PLUCK", "PLUMB", "PLUMP", "PLUNK",
+            "POINT", "POISE", "POKER", "POLAR", "POLKA", "POLYP", "POPPY", "PORCH", "POSSE", "POUND",
+            "POUTY", "POWER", "PRANK", "PREEN", "PRESS", "PRICE", "PRICK", "PRIDE", "PRIME", "PRIMO",
+            "PRIMP", "PRINT", "PRIOR", "PRISM", "PRIZE", "PROBE", "PRONE", "PRONG", "PROOF", "PROSE",
+            "PROUD", "PROVE", "PROWL", "PROXY", "PRUNE", "PSALM", "PULPY", "PUPIL", "PURGE", "QUAIL",
+            "QUAKE", "QUALM", "QUARK", "QUART", "QUASH", "QUEEN", "QUERY", "QUEST", "QUEUE", "QUICK",
+            "QUIET", "QUILL", "QUILT", "QUIRK", "QUITE", "QUOTA", "QUOTE", "RABID", "RACER", "RADIO",
+            "RAINY", "RAISE", "RAMEN", "RANCH", "RANGE", "RAPID", "RATIO", "RATTY", "RAYON", "REACH",
+            "REACT", "READY", "REALM", "REBEL", "REBUS", "REBUT", "RECAP", "RECUR", "REFER", "REGAL",
+            "RELAX", "RELAY", "RELIC", "REMIT", "RENEW", "REPAY", "REPEL", "RERUN", "RESIN", "RETCH",
+            "RETRO", "RETRY", "REUSE", "REVEL", "REVUE", "RHINO", "RHYME", "RIDER", "RIDGE", "RIGHT",
+            "RIGID", "RIPER", "RISEN", "RIVAL", "RIVET", "ROACH", "ROBIN", "ROBOT", "ROCKY", "RODEO",
+            "ROGUE", "ROOMY", "ROUGE", "ROUGH", "ROUND", "ROUSE", "ROUTE", "ROVER", "ROWDY", "ROWER",
+            "ROYAL", "RUDDY", "RUDER", "RUGBY", "RUMBA", "RUPEE", "RUSTY", "SAINT", "SALAD", "SALLY",
+            "SALSA", "SALTY", "SANDY", "SASSY", "SAUCY", "SAUNA", "SAUTE", "SAVOR", "SAVVY", "SCALD",
+            "SCALE", "SCANT", "SCARE", "SCARF", "SCENT", "SCOFF", "SCOLD", "SCONE", "SCOPE", "SCORE",
+            "SCORN", "SCOUR", "SCOUT", "SCOWL", "SCRAM", "SCRAP", "SCRUB", "SCRUM", "SEDAN", "SEEDY",
+            "SEGUE", "SENSE", "SERUM", "SERVE", "SEVEN", "SEVER", "SHADE", "SHAFT", "SHAKE", "SHAKY",
+            "SHALL", "SHAME", "SHANK", "SHAPE", "SHARD", "SHARE", "SHARP", "SHAVE", "SHAWL", "SHEAR",
+            "SHEET", "SHELF", "SHELL", "SHIFT", "SHINE", "SHIRE", "SHIRK", "SHORE", "SHORN", "SHORT",
+            "SHOUT", "SHOVE", "SHOWN", "SHOWY", "SHRUB", "SHRUG", "SHUCK", "SHUNT", "SHUSH", "SHYLY",
+            "SIEGE", "SIGHT", "SILLY", "SINCE", "SIREN", "SISSY", "SITAR", "SIXTH", "SKATE", "SKIER",
+            "SKIFF", "SKILL", "SKIMP", "SKIRT", "SKUNK", "SLANG", "SLATE", "SLEEK", "SLEEP", "SLICE",
+            "SLOPE", "SLOSH", "SLOTH", "SLUMP", "SLUNG", "SMALL", "SMART", "SMASH", "SMEAR", "SMELT",
+            "SMILE", "SMIRK", "SMITE", "SMITH", "SMOCK", "SMOKE", "SNACK", "SNAFU", "SNAIL", "SNAKE",
+            "SNAKY", "SNARE", "SNARL", "SNEAK", "SNIDE", "SNOOP", "SNORT", "SNOUT", "SOGGY", "SOLAR",
+            "SOLID", "SOLVE", "SONIC", "SORRY", "SOUND", "SOUTH", "SOWER", "SPACE", "SPADE", "SPARE",
+            "SPARK", "SPASM", "SPATE", "SPEAK", "SPEAR", "SPECK", "SPEED", "SPELL", "SPELT", "SPEND",
+            "SPENT", "SPICE", "SPICY", "SPIEL", "SPIKE", "SPILL", "SPINE", "SPIRE", "SPITE", "SPLAT",
+            "SPLIT", "SPOIL", "SPOKE", "SPOOF", "SPOOL", "SPOON", "SPORE", "SPORT", "SPOUT", "SPRAY",
+            "SPRIG", "SPURT", "SQUAD", "SQUAT", "SQUID", "STACK", "STAFF", "STAGE", "STAID", "STAIN",
+            "STAIR", "STAKE", "STALE", "STALL", "STAMP", "STAND", "STARE", "STARK", "START", "STASH",
+            "STATE", "STEAD", "STEAM", "STEED", "STEEL", "STEEP", "STEIN", "STERN", "STICK", "STIFF",
+            "STILL", "STILT", "STING", "STINK", "STINT", "STOCK", "STOIC", "STOLE", "STOMP", "STONE",
+            "STONY", "STOOD", "STOOL", "STORE", "STORK", "STORM", "STORY", "STOUT", "STOVE", "STRAP",
+            "STRAW", "STRAY", "STUDY", "STUMP", "STUNG", "STUNT", "STYLE", "SUAVE", "SUEDE", "SUGAR",
+            "SUITE", "SULKY", "SULLY", "SUMAC", "SUNNY", "SUPER", "SURER", "SURLY", "SUSHI", "SWATH",
+            "SWEAT", "SWEEP", "SWEET", "SWELL", "SWILL", "SWINE", "SWING", "SWIRL", "SWISH", "SWOON",
+            "SWORD", "SWUNG", "SYRUP", "TABBY", "TABLE", "TABOO", "TACIT", "TACKY", "TAFFY", "TAKEN",
+            "TALLY", "TALON", "TANGY", "TAPER", "TAPIR", "TARDY", "TASTE", "TASTY", "TAUNT", "TAUPE",
+            "TAWNY", "TEACH", "TEARY", "TEASE", "TEETH", "TEMPO", "TENOR", "TENTH", "TEPID", "TERSE",
+            "THANK", "THEIR", "THEME", "THERE", "THESE", "THICK", "THIEF", "THIGH", "THING", "THINK",
+            "THIRD", "THORN", "THOSE", "THREE", "THREW", "THROB", "THROW", "THRUM", "THUMB", "THUMP",
+            "THYME", "TIARA", "TIBIA", "TIDAL", "TIGER", "TILDE", "TIMER", "TINGE", "TIPSY", "TITAN",
+            "TITHE", "TITLE", "TIZZY", "TOAST", "TODAY", "TONIC", "TOOTH", "TOPAZ", "TOPIC", "TORCH",
+            "TORSO", "TOTAL", "TOTEM", "TOUCH", "TOUGH", "TOWEL", "TOWER", "TOXIC", "TOXIN", "TRACE",
+            "TRACK", "TRACT", "TRADE", "TRAIL", "TRAIN", "TRAIT", "TRASH", "TRAWL", "TREAT", "TREND",
+            "TRIAD", "TRIAL", "TRICE", "TRICK", "TRIPE", "TRITE", "TROLL", "TROOP", "TROPE", "TROUT",
+            "TROVE", "TRUCK", "TRULY", "TRUSS", "TRUST", "TRUTH", "TRYST", "TUBER", "TULIP", "TUNIC",
+            "TURBO", "TUTOR", "TWANG", "TWEAK", "TWEED", "TWICE", "TWINE", "TWIRL", "TWIST", "UDDER",
+            "ULCER", "ULTRA", "UNCLE", "UNDER", "UNDID", "UNDUE", "UNFED", "UNFIT", "UNIFY", "UNION",
+            "UNITE", "UNLIT", "UNMET", "UNTIE", "UNTIL", "UNZIP", "UPPER", "UPSET", "URBAN", "USAGE",
+            "USHER", "USING", "USUAL", "USURP", "UTTER", "UVULA", "VAGUE", "VALET", "VALID", "VALUE",
+            "VAPID", "VAULT", "VENOM", "VENUE", "VERGE", "VERSE", "VERVE", "VIDEO", "VIGOR", "VILLA",
+            "VINYL", "VIOLA", "VIRAL", "VISOR", "VITAL", "VIVID", "VIXEN", "VODKA", "VOICE", "VOILA",
+            "VOTER", "VOUCH", "VOWEL", "VYING", "WACKY", "WAFER", "WAGON", "WAIST", "WALTZ", "WASTE",
+            "WATCH", "WATER", "WAXEN", "WEARY", "WEDGE", "WEEDY", "WEIRD", "WHACK", "WHALE", "WHEAT",
+            "WHEEL", "WHELP", "WHERE", "WHICH", "WHIFF", "WHILE", "WHINE", "WHINY", "WHIRL", "WHISK",
+            "WHITE", "WHOLE", "WHOOP", "WHOSE", "WIDEN", "WIDTH", "WIELD", "WINCE", "WINDY", "WITCH",
+            "WITTY", "WOKEN", "WOMAN", "WOOER", "WORDY", "WORLD", "WORRY", "WORSE", "WORST", "WOULD",
+            "WOUND", "WOVEN", "WRATH", "WREAK", "WRIST", "WRITE", "WRONG", "WROTE", "WRUNG", "YACHT",
+            "YEARN", "YEAST", "YIELD", "YOUNG", "YOUTH", "ZEBRA", "ZESTY"
+        ]);
+
+        // DOM elements
+        const wordInput = document.getElementById('wordInput');
+        const resultDiv = document.getElementById('result');
+        const wordCountSpan = document.getElementById('wordCount');
+        const lastUpdatedSpan = document.getElementById('lastUpdated');
+
+        // Update word count
+        wordCountSpan.textContent = usedWords.size;
+
+        // Set last updated date (this should be updated when you add new words)
+        lastUpdatedSpan.textContent = "January 21, 2026";
+
+        // Cache for dictionary lookups
+        const wordCache = new Map();
+        let currentCheckId = 0;
+
+        // Check if word exists in dictionary using multiple APIs with fallbacks
+        async function isValidWord(word) {
+            const lowerWord = word.toLowerCase();
+
+            // Check cache first
+            if (wordCache.has(lowerWord)) {
+                return wordCache.get(lowerWord);
+            }
+
+            // If word is in our used words list, it's definitely valid
+            if (usedWords.has(word.toUpperCase())) {
+                wordCache.set(lowerWord, true);
+                return true;
+            }
+
+            // Try multiple dictionary APIs with fallbacks
+            const apis = [
+                `https://api.dictionaryapi.dev/api/v2/entries/en/${lowerWord}`,
+                `https://api.datamuse.com/words?sp=${lowerWord}&max=1`
+            ];
+
+            for (const apiUrl of apis) {
+                try {
+                    const response = await fetch(apiUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Datamuse returns an array, check if word matches exactly
+                        if (apiUrl.includes('datamuse')) {
+                            const isValid = data.length > 0 && data[0].word === lowerWord;
+                            if (isValid) {
+                                wordCache.set(lowerWord, true);
+                                return true;
+                            }
+                        } else {
+                            // Dictionary API returns data if word exists
+                            wordCache.set(lowerWord, true);
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    // Try next API
+                    continue;
+                }
+            }
+
+            // If all APIs fail or return no results, assume invalid
+            // But use a basic check: if it looks like a word (all letters), give benefit of doubt
+            wordCache.set(lowerWord, false);
+            return false;
+        }
+
+        // Check word function
+        async function checkWord(word) {
+            const cleanWord = word.trim().toUpperCase();
+            const checkId = ++currentCheckId;
+
+            // Clear result if empty
+            if (cleanWord.length === 0) {
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = '';
+                return;
+            }
+
+            // Check if valid 5-letter word
+            if (cleanWord.length !== 5) {
+                resultDiv.className = 'result invalid';
+                resultDiv.innerHTML = `
+                    <div class="result-icon">⚠️</div>
+                    <div>Words must be exactly 5 letters</div>
+                `;
+                return;
+            }
+
+            // Check if only letters
+            if (!/^[A-Z]+$/.test(cleanWord)) {
+                resultDiv.className = 'result invalid';
+                resultDiv.innerHTML = `
+                    <div class="result-icon">⚠️</div>
+                    <div>Please use only letters (A-Z)</div>
+                `;
+                return;
+            }
+
+            // FIRST: Check if word has been used (no API needed, instant)
+            if (usedWords.has(cleanWord)) {
+                resultDiv.className = 'result used';
+                resultDiv.innerHTML = `
+                    <div class="result-icon">X</div>
+                    <div class="word-display">${cleanWord}</div>
+                    <div>Already used</div>
+                `;
+                return;
+            }
+
+            // Show checking state for dictionary lookup
+            resultDiv.className = 'result checking';
+            resultDiv.innerHTML = `
+                <div class="spinner"></div>
+                <div class="word-display">${cleanWord}</div>
+                <div>Checking dictionary...</div>
+            `;
+
+            // Check if it's a valid English word
+            const isValid = await isValidWord(cleanWord);
+
+            // Make sure this is still the current check (user might have typed more)
+            if (checkId !== currentCheckId) return;
+
+            if (!isValid) {
+                resultDiv.className = 'result not-a-word';
+                resultDiv.innerHTML = `
+                    <div class="result-icon">?</div>
+                    <div class="word-display">${cleanWord}</div>
+                    <div>Not a recognized English word</div>
+                `;
+            } else {
+                resultDiv.className = 'result safe';
+                resultDiv.innerHTML = `
+                    <div class="result-icon">✓</div>
+                    <div class="word-display">${cleanWord}</div>
+                    <div>Valid word - NOT used yet!</div>
+                `;
+            }
+        }
+
+        // Debounce function to avoid too many API calls
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Debounced check function
+        const debouncedCheck = debounce((value) => checkWord(value), 300);
+
+        // Event listener for input
+        wordInput.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            // Only debounce when we have 5 letters (API call needed)
+            if (value.length === 5 && /^[a-zA-Z]+$/.test(value)) {
+                debouncedCheck(value);
+            } else {
+                checkWord(value);
+            }
+        });
+
+        // Also check on Enter key (immediate, no debounce)
+        wordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkWord(wordInput.value);
+            }
+        });
+
+        // Word list display
+        const wordListDiv = document.getElementById('wordList');
+        const filterInput = document.getElementById('filterInput');
+        const wordsArray = Array.from(usedWords).sort();
+
+        function renderWordList(filter = '') {
+            const filterUpper = filter.toUpperCase();
+            const filteredWords = filterUpper
+                ? wordsArray.filter(word => word.includes(filterUpper))
+                : wordsArray;
+
+            wordListDiv.innerHTML = filteredWords
+                .map(word => `<span class="word-tag">${word}</span>`)
+                .join('');
+        }
+
+        // Initial render
+        renderWordList();
+
+        // Filter functionality
+        filterInput.addEventListener('input', (e) => {
+            renderWordList(e.target.value);
+        });
+    </script>
+</body>
+</html>

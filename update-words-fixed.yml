@@ -1,0 +1,111 @@
+name: Update Wordle Words Daily
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-words:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch and update words
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+          const HTML_PATH = 'Wordle/index.html';
+
+          function fetchURL(url) {
+            return new Promise((resolve, reject) => {
+              const options = {
+                headers: { 'User-Agent': 'Mozilla/5.0 (compatible; WordleBot/1.0)' }
+              };
+              https.get(url, options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(data));
+              }).on('error', reject);
+            });
+          }
+
+          async function main() {
+            let html = fs.readFileSync(HTML_PATH, 'utf8');
+            const wordsMatch = html.match(/const usedWords = new Set\(\[([\s\S]*?)\]\)/);
+            if (!wordsMatch) process.exit(1);
+
+            const existingWords = new Set(
+              wordsMatch[1].match(/"([A-Z]+)"/g)?.map(w => w.replace(/"/g, '')) || []
+            );
+            console.log('Current words:', existingWords.size);
+
+            try {
+              // Use stadafa.com which has format: "1676. SULLY - 20 January 2026"
+              const page = await fetchURL('https://www.stadafa.com/2021/09/every-worlde-word-so-far-updated-daily.html');
+
+              // Match pattern: number followed by period, space, then 5-letter word
+              // Example: "1676. SULLY" or "1. CIGAR"
+              const matches = page.match(/\d+\.\s+([A-Z]{5})\b/g) || [];
+
+              const newWords = new Set();
+              for (const match of matches) {
+                const word = match.match(/([A-Z]{5})/)?.[1];
+                if (word) {
+                  newWords.add(word);
+                }
+              }
+
+              console.log('Found words from source:', newWords.size);
+
+              let added = 0;
+              for (const word of newWords) {
+                if (!existingWords.has(word)) {
+                  existingWords.add(word);
+                  console.log('Added:', word);
+                  added++;
+                }
+              }
+
+              console.log('New words added:', added);
+
+            } catch (e) {
+              console.log('Fetch failed:', e.message);
+              process.exit(1);
+            }
+
+            // Sort and format
+            const sorted = Array.from(existingWords).sort();
+            const rows = [];
+            for (let i = 0; i < sorted.length; i += 10) {
+              rows.push('            ' + sorted.slice(i, i + 10).map(w => `"${w}"`).join(', '));
+            }
+
+            html = html.replace(
+              /const usedWords = new Set\(\[([\s\S]*?)\]\)/,
+              `const usedWords = new Set([\n${rows.join(',\n')}\n        ])`
+            );
+
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            html = html.replace(/lastUpdatedSpan\.textContent = "[^"]+"/, `lastUpdatedSpan.textContent = "${today}"`);
+
+            fs.writeFileSync(HTML_PATH, html);
+            console.log('Final word count:', sorted.length);
+          }
+          main();
+          EOF
+
+      - name: Commit changes
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add Wordle/index.html
+          git diff --staged --quiet || git commit -m "Update words - $(date +'%Y-%m-%d')"
+          git push
